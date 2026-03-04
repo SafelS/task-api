@@ -1,6 +1,7 @@
 package com.semih.taskapi.service;
 
 
+import com.semih.taskapi.exception.TaskNotFoundException;
 import com.semih.taskapi.model.Task;
 import com.semih.taskapi.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,12 +16,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @RequiredArgsConstructor
 public class TaskService {
 
-    /* Lists no longer needed!
 
-    private final List<Task> tasks = new ArrayList<>();
-    private final AtomicLong idCounter = new AtomicLong(1);
-
-     */
 
     private final TaskRepository taskRepository;
 
@@ -29,31 +25,31 @@ public class TaskService {
         return taskRepository.findAll();
     }
 
-    public Optional<Task> getTaskById(Long id){
-        return taskRepository.findById(id);
+    public Task getTaskById(Long id){
+        return taskRepository.findById(id)
+                .orElseThrow(() -> new TaskNotFoundException(id));
     }
 
     public Task createTask(Task task){
         return taskRepository.save(task);
     }
 
-    public Optional<Task> updateTask(Long id, Task updatedTask){
+    public Task updateTask(Long id, Task updatedTask){
 
-        return taskRepository.findById(id).map(task -> {
-            task.setTitle(updatedTask.getTitle());
-            task.setDescription(updatedTask.getDescription());
-            task.setCompleted(updatedTask.isCompleted());
-            return taskRepository.save(task);
-        });
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new TaskNotFoundException(id));
 
+        task.setTitle(updatedTask.getTitle());
+        task.setDescription(updatedTask.getDescription());
+        task.setCompleted(updatedTask.isCompleted());
+        return taskRepository.save(task);
     }
 
-    public boolean deleteTask(Long id){
+    public void deleteTask(Long id){
         if(!taskRepository.existsById(id)){
-            return false;
+            throw new TaskNotFoundException(id);
         }
         taskRepository.deleteById(id);
-        return true;
     }
 
 }
